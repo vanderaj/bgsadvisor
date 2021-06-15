@@ -1,9 +1,9 @@
 package main
 
 import (
-	"advisors/advisors"
 	"flag"
 	"fmt"
+	"internal/advisors"
 	"os"
 	"os/signal"
 	"syscall"

@@ -20,7 +20,7 @@ BGS Advisor pulls in data from EliteBGS once a day, and analyzes it to provide e
 
 ## How is BGS Advisor different to BGSBot
 
-EliteBGS has an official BGSBot that provides detailed raw information about systems. There is no analysis, so BGS planners need to interpret BGSBot's output, and occasionally go check out a faction's security or economic state directly to create more detailed plans.
+EliteBGS has an official BGSBot that provides detailed raw information about factions and systems. There is no analysis, so BGS planners need to interpret BGSBot's output, and occasionally go check out a faction's security or economic state directly to create more detailed plans.
 
 ## What this bot is *NOT*
 
