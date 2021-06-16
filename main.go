@@ -3,75 +3,59 @@ package main
 import (
 	"flag"
 	"fmt"
-	"internal/advisors"
-	"os"
-	"os/signal"
-	"syscall"
+	"log"
 
-	"github.com/bwmarrin/discordgo"
+	"github.com/go-openapi/strfmt"
+
+	apiclient "github.com/bgsadvisor/v2/client"
+	"github.com/bgsadvisor/v2/client/operations"
+	httptransport "github.com/go-openapi/runtime/client"
 )
 
-// Variables used for command line parameters
-var (
-	Token string
-)
-
-func init() {
-
-	flag.StringVar(&Token, "t", "", "Bot Token")
-	flag.Parse()
-}
+var faction string
+var host string
 
 func main() {
 
-	// Create a new Discord session using the provided bot token.
-	dg, err := discordgo.New("Bot " + Token)
+	fmt.Println("BGS Advisor v0.1")
+
+	flag.StringVar(&faction, "faction", "Operation Ida", "Display BGS advice for this faction")
+	flag.StringVar(&host, "host", "elitebgs.app", "Change the API host")
+	flag.Parse()
+
+	// create the transport
+	transport := httptransport.New(host, "/api/ebgs/v5/", nil)
+
+	// create the API client, with the transport
+	client := apiclient.New(transport, strfmt.Default)
+
+	// to override the host for the default client
+	apiclient.Default.SetTransport(transport)
+
+	// make the request to get all items
+	resp, err := client.Operations.GetTicks(&operations.GetTicksParams{})
 	if err != nil {
-		fmt.Println("error creating Discord session,", err)
-		return
+		log.Fatal(err)
 	}
+	fmt.Printf("%#v\n", resp.Payload)
 
-	// Register the messageCreate func as a callback for MessageCreate events.
-	dg.AddHandler(messageCreate)
+	// obtain tick data
 
-	// In this example, we only care about receiving message events.
-	dg.Identify.Intents = discordgo.MakeIntent(discordgo.IntentsGuildMessages)
+	// obtain faction data
 
-	// Open a websocket connection to Discord and begin listening.
-	err = dg.Open()
-	if err != nil {
-		fmt.Println("error opening connection,", err)
-		return
-	}
+	// iterate and get system data
 
-	// Wait here until CTRL-C or other term signal is received.
-	fmt.Println("Bot is now running.  Press CTRL-C to exit.")
-	sc := make(chan os.Signal, 1)
-	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
-	<-sc
+	// if tick is newer than system data, display a list of systems with outdated data, starting with controlled systems
 
-	// Cleanly close down the Discord session.
-	dg.Close()
-}
+	// Find the x (3 = default) systems with the most problems that need attention
 
-// This function will be called (due to AddHandler above) every time a new
-// message is created on any channel that the authenticated bot has access to.
-func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
+	// display pending state changes that could need attention
 
-	// Ignore all messages created by the bot itself
-	// This isn't required in this specific example but it's a good practice.
-	if m.Author.ID == s.State.User.ID {
-		return
-	}
-	// If the message is "ping" reply with "Pong!"
-	if m.Content == "!bgsadvisor" {
-		// Get the basic BGS orders of the day
-		result := advisors.PublicBGSAdvice(s, m)
-		s.ChannelMessageSend(m.ChannelID, result)
-	}
+	// display conflicts (system, asset, faction 1, faction 2, faction 1 days won, faction 2 days won)
 
-	// If the message is "pong" reply with "Ping!"
-	if m.Content == "!bgsretreat" {
-		s.ChannelMessageSend(m.ChannelID, "Ping!")
-	}
+	// display list of systems, inf, inf delta 1d, inf delta 7d, 1st faction, 2nd faction, last faction, order by margin of control
+
+	// display bad state list
+
+	// display min inf controllers
 }
