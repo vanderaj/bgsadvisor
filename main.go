@@ -4,16 +4,21 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"strconv"
+	"time"
 
 	"github.com/go-openapi/strfmt"
 
 	apiclient "github.com/bgsadvisor/v2/client"
 	"github.com/bgsadvisor/v2/client/operations"
+	"github.com/bgsadvisor/v2/models"
 	httptransport "github.com/go-openapi/runtime/client"
 )
 
 var faction string
 var host string
+
+var ticks models.TickTimesV5
 
 func main() {
 
@@ -32,14 +37,22 @@ func main() {
 	// to override the host for the default client
 	apiclient.Default.SetTransport(transport)
 
+	timeNow := time.Now().UnixNano() / 1e6
+	// min time is 8 days ago, EliteBGS will only return up to 7
+	timemin := strconv.FormatInt(timeNow, 10)
+	timemax := strconv.FormatInt(timeNow, 10)
+
+	// obtain tick data
+	tick := operations.GetTicksParams{TimeMax: &timemax, TimeMin: &timemin}
+	tick.SetTimeout(45 * time.Second)
+
 	// make the request to get all items
-	resp, err := client.Operations.GetTicks(&operations.GetTicksParams{})
+	resp, err := client.Operations.GetTicks(nil)
 	if err != nil {
 		log.Fatal(err)
 	}
 	fmt.Printf("%#v\n", resp.Payload)
-
-	// obtain tick data
+	ticks = *resp.Payload[0]
 
 	// obtain faction data
 
